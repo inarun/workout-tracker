@@ -1,7 +1,7 @@
-const CACHE_NAME = 'workout-v10-5-3';
+const CACHE_NAME = 'workout-v10-6-0';
 
 // The app shell. These are same-origin and must all cache for the PWA to work offline.
-const PRECACHE_URLS = ['./', './index.html', './bundle.js?v=10.5.3', './manifest.json', './icon-192.png', './icon-512.png'];
+const PRECACHE_URLS = ['./', './index.html', './bundle.js?v=10.6.0', './manifest.json', './icon-192.png', './icon-512.png'];
 
 // Nice to have, but third-party. Kept out of the atomic batch below.
 //
