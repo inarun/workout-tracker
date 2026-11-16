@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Privacy policy — Ledger</title>
+  <meta name="description" content="Privacy policy for Ledger, a workout tracker for iPhone and the web: what is collected, why, who holds it, how long it is kept, and how to delete it." />
+  <meta name="robots" content="index, follow" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <link rel="icon" href="icon-192.png" />
+  <!-- Deliberately standalone: no script, no CDN font, no third-party anything. A page that
+       explains "there is no tracking in this app" should not itself load a resource from
+       somebody else's server, and it has to render on the network of whoever is checking
+       that claim - Google's OAuth reviewer and Apple's App Review included. Styling is inline
+       for the same reason: one request, no build step, nothing to go stale.
+
+       This is the privacy policy for both apps, and the URL given to App Store Connect. The
+       short versions shipped inside the apps are src/privacyNotice.js (web) and
+       ios/LedgerCore/Sources/LedgerCore/Cloud/PrivacyNotice.swift (iPhone). Change them in the
+       same commit, and keep privacy.html in the ci.yml deploy allowlist or the URL 404s.
+
+       App Store guideline 5.1.1(i) asks the policy to say what is collected, how and for what,
+       that any third party holding the data protects it equally, how long it is kept, and
+       how to withdraw consent or have it deleted. Guideline 5.1.3 covers Health data. Those
+       sections, and the ones the law asks for (who is responsible, rights, children,
+       changes), should not be dropped without a reason. California's CalOPPA (Bus. & Prof.
+       Code 22575) adds the effective date, how users hear of changes, how Do Not Track is
+       handled and whether other parties collect data through the app; the CCPA adds the
+       California residents section. Keep those too. -->
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 2.5rem 1.25rem 4rem;
+      background: #0a0a0f;
+      color: #e8e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-size: 17px;
+      line-height: 1.65;
+      -webkit-text-size-adjust: 100%;
+      -webkit-font-smoothing: antialiased;
+    }
+    main { max-width: 42rem; margin: 0 auto; }
+    h1 { font-size: 1.85rem; line-height: 1.2; margin: 0 0 0.35rem; letter-spacing: -0.01em; }
+    h2 { font-size: 1.2rem; line-height: 1.3; margin: 2.4rem 0 0.6rem; color: #ffffff; }
+    p, li { color: #d2d2e0; }
+    p { margin: 0 0 1rem; }
+    ul { margin: 0 0 1rem; padding-left: 1.25rem; }
+    li { margin-bottom: 0.35rem; }
+    strong { color: #ffffff; }
+    a { color: #a29bfe; }
+    a:hover { color: #c9c3ff; }
+    :focus-visible { outline: 2px solid #6c5ce7; outline-offset: 2px; border-radius: 4px; }
+    code {
+      font-family: ui-monospace, 'SF Mono', Menlo, 'Fira Code', monospace;
+      font-size: 0.9em;
+      background: #16161f;
+      border: 1px solid #24242f;
+      border-radius: 4px;
+      padding: 0.08em 0.35em;
+      word-break: break-word;
+    }
+    .lede { color: #9a9ab4; margin: 0 0 0.25rem; font-size: 0.95rem; }
+    .updated { color: #7a7a9c; font-size: 0.9rem; margin: 0 0 2rem; }
+    .home { display: inline-block; margin-bottom: 2rem; font-size: 0.95rem; }
+    footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #24242f;
+      color: #7a7a9c;
+      font-size: 0.9rem;
+    }
+    footer a { color: #8f88e0; }
+  </style>
+</head>
+<body>
+<main>
+  <a class="home" href="./">&larr; Ledger</a>
+
+  <h1>Privacy policy</h1>
+  <p class="lede">Ledger — a workout tracker for iPhone and the web.</p>
+  <p class="updated"><strong>Effective 31 October 2026</strong> (last updated 31 October 2026)</p>
+
+  <p>
+    This policy covers the Ledger iPhone app and the Ledger web app. Each app also has a
+    short version in Settings. If they ever disagree, email the address below and this page
+    will be corrected. Using Ledger is also covered by its <a href="terms.html">Terms of Use</a>.
+  </p>
+
+  <h2>In short</h2>
+  <ul>
+    <li>
+      No ads, no tracking, and no analytics or crash-reporting code. Your data is never sold.
+    </li>
+    <li>Without an account, Ledger sends your log to no server, except to the web app's Google Drive backup script, if you set one up.</li>
+    <li>With an account, your log is synced through Google Firebase, and only for you.</li>
+    <li>
+      What Ledger reads from Apple Health (your heart rate and energy burned during a workout
+      it records) stays on your iPhone and Apple Watch. It is never uploaded or used for
+      advertising.
+    </li>
+    <li>
+      The Apple Intelligence, voice and photo features run on your iPhone.
+    </li>
+    <li>Ledger is a training log, not medical advice.</li>
+  </ul>
+
+  <h2>Who is responsible</h2>
+  <p>
+    Ledger is made and run by one person, as an individual, not a company. Contact:
+    <a href="mailto:support@nusayb.me">support@nusayb.me</a>.
+  </p>
+
+  <h2>Cloud sync is optional</h2>
+  <p>
+    Without an account, everything you log (workouts, templates, body weight, exercise
+    photos, settings) is saved only on your device: in the iPhone app's storage, or in your
+    browser's storage for the web app. Ledger sends it to no server. On iPhone it can still
+    reach your own devices and Apple's services: your paired Apple Watch gets the
+    workout in progress, Apple Health gets what you turn on (see On iPhone), and your
+    iPhone's own iCloud or computer backups include the app's files, as Apple sets them up.
+  </p>
+  <p>
+    The web app loads its UI framework (React) from Cloudflare's CDN. Cloudflare sees your
+    IP address and browser, as with any website, and nothing about your training. If you
+    set up the web app's optional Google Drive backup script, it copies your log to your
+    own Google account: the current file, the previous copy and up to 90 daily restore
+    points, in a folder in your Drive. The developer cannot access them, and deleting your
+    Ledger account does not touch them; delete them in Google Drive.
+  </p>
+
+  <h2>What is stored</h2>
+  <p>
+    With an account, which keeps the same log on each device you sign in on, the following
+    is stored in the cloud:
+  </p>
+  <ul>
+    <li>
+      Your training records: workouts (including notes you write and workouts you deleted
+      recently), templates, body weight, your custom exercises and changes to exercise
+      details, and app settings.
+    </li>
+    <li>
+      Your email address and an account ID. If you use a password, only a hash of it is kept.
+    </li>
+    <li>
+      If you sign in with Google: the ID, name and profile picture Google shares. If you sign
+      in with Apple: an ID and your email, or Apple's private relay address if you hide it.
+      Ledger does not ask Apple for your name.
+    </li>
+  </ul>
+  <p>
+    The workouts, notes and body weight you enter in Ledger are your log, whether or not you
+    also save them to Apple Health, and with an account they sync like the rest of it. To
+    sign you in, the sign-in service also processes your IP address and device or browser
+    details. Exercise photos, the workout you haven't saved yet, and anything Ledger reads
+    from Apple Health are never uploaded. Signing out stops syncing.
+  </p>
+
+  <h2>On iPhone</h2>
+  <p>
+    These features work only when you use them. iOS asks your permission before Ledger can use
+    Health, the camera or the microphone.
+  </p>
+  <ul>
+    <li>
+      <strong>Apple Health.</strong> If you turn it on in Settings &gt; Apple Health, Ledger
+      saves your workouts and body weight to Health, a lift as strength training and an activity as
+      its own type, such as running or yoga. With Record Heart Rate on, it also records
+      a workout with Health, saving the energy burned and reading your heart rate during it.
+      With the Apple Watch app, if you allow Health access on the watch, the watch records each
+      new workout it shows, with the heart rate and energy burned from its sensors, and saves it
+      to Health when you finish on your iPhone. The workout passes between your iPhone and your
+      watch directly, not through a server. It reads back only its own entries and the heart
+      rate of the workouts it recorded, to show them in the app, and, with Use Sleep in Plans
+      on, last night's sleep. What Ledger reads from Health
+      stays on your iPhone and Apple Watch: it is not saved in Ledger's own files, is never
+      uploaded, and is never used for advertising, marketing or data mining. Ledger never
+      writes false data to Health.
+    </li>
+    <li>
+      <strong>Camera and photos.</strong> Used to take exercise reference photos, which stay
+      on your iPhone. Log from a Photo reads a written workout or a screenshot, and Machine Is
+      This? reads a photo of a gym machine, both on your iPhone. You take these photos or choose
+      them from your library, and they are not kept.
+    </li>
+    <li>
+      <strong>Microphone and speech.</strong> Say a Set turns your voice into text on your
+      iPhone, with Apple's on-device speech recognition. The audio is not kept or sent.
+    </li>
+    <li>
+      <strong>Apple Intelligence</strong> (iOS 27 and later; Settings &gt; Apple Intelligence
+      Features). Ask Ledger, workout summaries, last week and block reviews, Log from a Photo,
+      Machine Is This?, Say a Set, New Template, progression hints and Tidy Names use Apple's
+      on-device model. Ask Ledger reads what you
+      type, then plans the workout or answers the question from your own log on your iPhone. Your questions, the workout details they use
+      (including heart rate), and the answers stay on your iPhone. Ask can search your own
+      notes, on your iPhone. What you say hurts stays on your iPhone so plans spare it for 3
+      days, and is removed the next time you open Ledger after that. With Use Sleep in Plans on, Ledger reads last night's
+      sleep from Health on your iPhone, only to make a plan lighter, and does not keep it. With
+      the Apple Watch app, what you say or scribble on the watch goes to your iPhone to be read.
+      <br />
+      Ledger sends nothing to any AI service.
+    </li>
+    <li>
+      <strong>Spotlight, Siri, widgets and Live Activities.</strong> Each workout's name, date,
+      exercises and number of sets (for an activity, its time, distance and intervals), and each exercise's name, how many workouts it is in and
+      when it was last done, are indexed on your iPhone so Spotlight and Siri can find them.
+      Siri answers questions about your training only once your iPhone is unlocked, and says
+      the answer aloud; Ask
+      Ledger words it with Apple's on-device model, on your iPhone. Widgets and the Lock
+      Screen show your recent training and, during a recorded workout, your heart rate. The
+      workout's Live Activity, heart rate included, also shows in your Apple Watch's Smart
+      Stack and, while your iPhone is connected to a car, on the CarPlay Dashboard. Rest
+      timer alerts are local notifications, on your iPhone and, if you allow them there, on
+      your watch; Rest Alarm, if you turn it on, sets an alarm on your iPhone for the end of
+      each rest. Ledger sends none of this to a server. Siri itself is Apple's, and Apple's
+      privacy policy covers what it does with a request.
+    </li>
+    <li>
+      <strong>Backups, exports and the stats-card images you save to Photos</strong> are files
+      you create and share yourself.
+    </li>
+  </ul>
+
+  <h2>What it is for</h2>
+  <p>
+    Only to run the features above: keeping your log on your devices and restoring it if you
+    lose one. Your data is not used to profile you, not used for advertising, and not sold or
+    shared for any other purpose.
+  </p>
+
+  <h2>Where it is kept</h2>
+  <p>
+    Your synced data is stored with Google Firebase (Authentication and Cloud Firestore), in a
+    project owned by the developer. Google processes it only on Ledger's behalf, under
+    <a href="https://firebase.google.com/terms/data-processing-terms">Firebase's data
+    processing terms</a>, and gives it the same or equal protection as this policy. Its
+    servers are global, so your data may be stored outside your country, including in the
+    United States. Server rules let only your own signed-in, verified account read or write
+    your records. The developer can reach the project through Google's console to run the
+    service, and for nothing else.
+  </p>
+  <p>
+    Apple and Google see that you used their sign-in with Ledger, but not your training.
+    Firebase is the only service that stores your log for Ledger (see Other parties), and none of
+    it goes to an AI service.
+  </p>
+
+  <h2>Other parties</h2>
+  <p>
+    No advertising, analytics or social-media company collects information through Ledger.
+    Using Ledger does mean your device contacts a few services, each under its own privacy
+    policy. Like any server, each sees your IP address and basic device or browser details.
+  </p>
+  <ul>
+    <li><strong>GitHub Pages</strong> hosts the web app and this page.</li>
+    <li>
+      <strong>Cloudflare</strong> (cdnjs) serves the web app's UI framework, React. It is told
+      nothing about you or your training.
+    </li>
+    <li>
+      <strong>Google Firebase</strong> runs accounts and sync, and only if you create an
+      account.
+    </li>
+    <li>
+      <strong>Google or Apple</strong>, if you sign in with one of them, confirms who you are.
+    </li>
+    <li>
+      <strong>Google Drive</strong>, only if you set up the web app's backup script, keeps that
+      backup in your own Google account.
+    </li>
+    <li>
+      <strong>Apple</strong> runs the App Store, TestFlight, and the iPhone features Ledger
+      uses, such as Siri and Health.
+    </li>
+  </ul>
+  <p>
+    Of these, only Firebase stores your training log for Ledger; a Drive backup is your own
+    copy in your own account. A link you tap to another website, such as an exercise's
+    source, opens that site in your browser, under its own policy.
+  </p>
+
+  <h2>How long it is kept</h2>
+  <p>
+    Cloud records are kept until you delete them or your account. A deleted workout is kept
+    for at least 7 days so you can restore it (Recently Deleted on iPhone, Deleted workouts
+    on the web). After that, Ledger removes it for good the next time it opens, and from the
+    cloud when a signed-in device next syncs. When a record is deleted for good, a small
+    deletion marker remains so your other devices remove it too. The marker keeps only the
+    record's type, its key (an ID, a date, or an exercise or setting name) and when it was
+    deleted and synced, and it stays until you delete your account. After account deletion, Firebase
+    removes the remaining sign-in data within 180 days and keeps IP addresses for a few
+    weeks.
+  </p>
+
+  <h2>Deleting it</h2>
+  <p>You can delete your data or withdraw your consent at any time.</p>
+  <ul>
+    <li>
+      <strong>Delete your account in the app</strong>: Settings &gt; Account &gt; Delete Account
+      on iPhone, or Settings &gt; Cloud Sync &gt; Delete account on the web. This deletes all your
+      cloud records and then the account.
+    </li>
+    <li>
+      When you delete your account on iPhone, Ledger also revokes its Sign in with Apple
+      access, and tells you if that fails. Deleting on the web can't do this: remove Ledger in
+      Settings &gt; your name &gt; Sign-In &amp; Security &gt; Sign in with Apple on an Apple
+      device.
+    </li>
+    <li>
+      The log on your device stays until you delete it or the app. Data saved to Apple Health
+      stays in Health; delete it in the Health app. A Google Drive backup stays in your Drive
+      until you delete it there. To remove Ledger's access to your Google account, go to your
+      Google Account's third-party connections.
+    </li>
+    <li>
+      To withdraw permission, sign out, turn features off in Ledger's Settings, or change
+      Health, Camera and Microphone access in iPhone Settings.
+    </li>
+    <li>
+      If you can't reach the button, email
+      <a href="mailto:support@nusayb.me">support@nusayb.me</a> from the address on the account
+      and it will be deleted for you.
+    </li>
+  </ul>
+
+  <h2>No analytics, no ads</h2>
+  <p>
+    Ledger contains no analytics or crash-reporting code. There is no tracking, no
+    advertising and no third-party analytics SDK in either app. Your data is never sold,
+    rented or shared for marketing.
+  </p>
+  <p>
+    Apple may share crash reports from the iPhone app with the developer and, if you allow it
+    in iPhone Settings (Privacy &amp; Security &gt; Analytics &amp; Improvements), usage
+    statistics. If you test Ledger through TestFlight, Apple also shares your name or email
+    and any feedback you send. The developer uses these only to fix problems.
+  </p>
+
+  <h2>Do Not Track</h2>
+  <p>
+    Ledger does not track you over time or across other websites or apps, and lets no one
+    else do so through it. It treats every visit the same whether or not your browser sends
+    Do Not Track or Global Privacy Control.
+  </p>
+
+  <h2>Your rights</h2>
+  <p>
+    Wherever you live, you can ask for a copy of your data, a correction, deletion, a portable
+    copy, or for its use to be restricted. Email
+    <a href="mailto:support@nusayb.me">support@nusayb.me</a>. There is no charge. You can also
+    take a copy of your log yourself at any time: Settings &gt; Backup and Export &gt; Export
+    Backup on iPhone, or Settings &gt; Data &gt; Export JSON on the web. Where the law
+    requires a legal basis, it is your consent, given by creating an account and withdrawn by
+    signing out or deleting it. You can also complain to your data protection authority.
+  </p>
+
+  <h2>California residents</h2>
+  <p>
+    Ledger does not sell or share personal information, as the California Consumer Privacy
+    Act defines those words, and has not done so in the past 12 months. It uses your account
+    login and fitness data only to provide the features you use. You can ask to know what
+    Ledger holds about you, to correct it or to delete it, and you won't be treated
+    differently for asking. You can take a copy at any time (see Your rights). To make a
+    request, email <a href="mailto:support@nusayb.me">support@nusayb.me</a> from the address
+    on your account, or have someone you have authorized in writing do so. You will get an
+    answer within 45 days.
+  </p>
+
+  <h2>Children</h2>
+  <p>
+    Ledger is not directed at children, and accounts are not knowingly created for anyone
+    under 16. The iPhone app asks you once to confirm that you are at least 16; it doesn't ask
+    for a date of birth, check the answer or keep an age. The web app does not ask anyone's
+    age. If you believe a child has made an account, email the address above and it will be
+    deleted. Anyone under 18 can remove what they have logged, or their account, at any
+    time: delete workouts in History, delete the account in Settings, or email the address
+    above and it will be done for them.
+  </p>
+
+  <h2>Not medical advice</h2>
+  <p>
+    Ledger is a training log, not medical advice. Check with a doctor or other qualified
+    professional before starting a new program, and stop if something hurts.
+  </p>
+
+  <h2>Changes</h2>
+  <p>
+    When what Ledger collects or how it is used changes, this page and the notices in the apps
+    are updated, along with the dates at the top. Before a change that collects something new
+    or uses data in a new way takes effect, the app will tell you.
+  </p>
+
+  <footer>
+    <p>
+      Questions, corrections, or a deletion request:
+      <a href="mailto:support@nusayb.me">support@nusayb.me</a>.
+    </p>
+    <p><a href="terms.html">Terms of Use</a> · <a href="./">Open the web app</a></p>
+  </footer>
+</main>
+</body>
+</html>

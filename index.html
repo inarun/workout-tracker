@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- Locks the origin down to the hosts this app actually uses. `connect-src` is an
+       explicit list rather than a bare `https:`: cloud sync talks to the app's own
+       Firebase project, so every host is known at build time and anything else is
+       refused. script.google.com and script.googleusercontent.com are the Google Drive
+       backup kept for existing set-ups - the deployment URL and the 302 target the engine
+       follows. The reCAPTCHA entries are for App Check, which loads its script from
+       Google and runs its challenge in a frame. No 'unsafe-eval': nothing in this app
+       compiles code at runtime. -->
+  <!-- The sha256 hash allows exactly one inline script: the service-worker registration at
+       the bottom of this file. Recompute it if that script ever changes byte-for-byte
+       (the console CSP error prints the expected hash). Without it the SW never registers
+       on fresh installs and the app silently loses offline support. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ 'sha256-RWDlsxws69+kIrpF3I71eU3oi6aF84dLgzzlwb1s2rM='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://firebaseappcheck.googleapis.com https://script.google.com https://script.googleusercontent.com; frame-src https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/; object-src 'none'; base-uri 'self'; form-action 'none'; manifest-src 'self'; worker-src 'self'" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Ledger" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <title>Ledger</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <style>
+    /* Design tokens that CSS needs to see. The JS mirror lives in src/tokens.js; the
+       palette vars are written by App on every theme change (src/app.jsx). */
+    :root{
+      --wt-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+      --wt-num:ui-rounded,'SF Pro Rounded',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+      --wt-ease:cubic-bezier(0.2,0.7,0.3,1);
+      /* ── Adaptive shell geometry ──
+         The safe-area insets are read once, here, and everything that has to clear a notch,
+         a home indicator or a rounded corner reads these instead of env() directly. The
+         max() lets the visual harness simulate a device it cannot produce: it writes
+         --wt-sim-inset-* (see tests/visual/entry.jsx) and the real env() stays 0 in Chrome. */
+      --wt-inset-t:max(env(safe-area-inset-top,0px),var(--wt-sim-inset-t,0px));
+      --wt-inset-r:max(env(safe-area-inset-right,0px),var(--wt-sim-inset-r,0px));
+      --wt-inset-b:max(env(safe-area-inset-bottom,0px),var(--wt-sim-inset-b,0px));
+      --wt-inset-l:max(env(safe-area-inset-left,0px),var(--wt-sim-inset-l,0px));
+      /* The dock is a floating capsule over the content on narrow viewports and a left rail
+         at >=700px, so the space it needs is a variable rather than a constant: --wt-rail-w
+         on the horizontal, --wt-dock-clear on the vertical. --wt-acc-h is the band the
+         workout accessory occupies just above the dock: 0 here, and raised on #root by the
+         :has() rule further down whenever one of those pills is actually mounted. */
+      --wt-rail-w:0px;
+      --wt-dock-h:56px;
+      --wt-dock-gap:max(12px,calc(var(--wt-inset-b) - 8px));
+      --wt-dock-clear:calc(var(--wt-dock-h) + var(--wt-dock-gap) + 8px);
+      --wt-acc-h:0px;
+      --wt-col-max:600px;
+    }
+    /* Rail tier. The dock leaves the bottom edge entirely, so the only bottom clearance
+       left is the home indicator. */
+    @media (min-width:700px){:root{--wt-rail-w:72px;--wt-dock-clear:var(--wt-inset-b);--wt-col-max:640px}}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+    /* Prose and controls are sans; digits are the rounded face with tabular figures. See the
+       FONT token for the rationale. */
+    body{background:#0a0a0f;color:#e8e8f0;font-family:var(--wt-sans);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overscroll-behavior:none;padding-top:var(--wt-inset-t)}
+    .mono{font-family:var(--wt-num);font-variant-numeric:tabular-nums}
+    /* Every chart label is a number or a short data key, so SVG text takes the numeric face.
+       This wins over the fontFamily="inherit" presentation attribute the chart code uses. */
+    svg text{font-family:var(--wt-num);font-variant-numeric:tabular-nums}
+    input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+    input[type=number]{-moz-appearance:textfield}input::placeholder{color:var(--wt-muted,#7a7a9c)}input:focus{border-color:var(--wt-accent,#6c5ce7)!important;outline:none}
+    button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[role=button]:focus-visible,summary:focus-visible{outline:2px solid var(--wt-accent,#6c5ce7)!important;outline-offset:2px;border-radius:4px}
+    /* Touch feedback. Inline styles can't express :active/:hover, and the tap highlight is
+       suppressed above, so without this every control feels dead on press. */
+    button,[role=button],.tappable{transition:transform 120ms var(--wt-ease),background-color 150ms var(--wt-ease),border-color 150ms var(--wt-ease),opacity 150ms var(--wt-ease),filter 150ms var(--wt-ease)}
+    button:not(:disabled):active,[role=button]:active{transform:scale(0.97)}
+    .tappable:active{transform:scale(0.985)}
+    @media (hover:hover){button:not(:disabled):hover,[role=button]:hover,.tappable:hover{filter:brightness(1.08)}}
+    button:disabled{opacity:0.45;cursor:not-allowed;transform:none}
+    /* A card that opens something: one real button, stretched over the whole card by its
+       ::after, so the card is focusable and named for keyboard and assistive technology. The
+       card is position:relative and carries .tappable for the press; the card's own secondary
+       buttons come after the stretched one in the DOM and are positioned, so they paint above
+       its ::after and stay separately reachable. The focus ring is drawn on the whole card. */
+    /* Read by assistive technology, not drawn: the words behind a one-letter marker. */
+    .wt-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    .wt-card-link{background:none;border:0;padding:0;margin:0;color:inherit;font:inherit;text-align:left;cursor:pointer;display:block;width:100%;min-width:0}
+    .wt-card-link::after{content:"";position:absolute;inset:0;border-radius:20px}
+    .wt-card-link:not(:disabled):active{transform:none}
+    .wt-card-link:focus-visible{outline:none!important}
+    .wt-card-link:focus-visible::after{outline:2px solid var(--wt-accent,#6c5ce7);outline-offset:2px}
+    @media (hover:hover){.wt-card-link:not(:disabled):hover{filter:none}}
+    ::-webkit-scrollbar{display:none}
+    /* ── Shell ──
+       The app is fluid now: no 480px cap, no auto margins. The readable column width lives
+       on .wt-pane so the dock and the rail can sit outside it. Nothing in the #root rule may
+       use transform, filter, backdrop-filter, will-change or contain — any one of them makes
+       #root the containing block for its fixed descendants, which would re-root the nav, the
+       toast and every overlay. The same ban holds for anything with a fixed child. The nav is
+       a leaf, which is why it may carry .wt-glass below; its own rule still stays clean so the
+       guard in tests/shellCss.test.js can tell the two apart. */
+    #root{min-height:100vh;min-height:100dvh;position:relative;overflow-x:clip;padding-left:calc(var(--wt-rail-w) + var(--wt-inset-l));padding-right:var(--wt-inset-r);padding-bottom:calc(var(--wt-dock-clear) + var(--wt-acc-h) + 12px)}
+    /* One grid whose first cell is always the primary screen, so a second pane can appear
+       and disappear later without remounting what is in the first one. */
+    .wt-panes{display:grid;grid-template-columns:minmax(0,1fr)}
+    .wt-pane{min-width:0;width:100%;max-width:var(--wt-col-max);margin:0 auto}
+    /* Two columns, and two locks on them. The class says a secondary pane exists — only
+       JavaScript can know that, because a pane is a screen and something has to build it
+       (src/layout.js). The query says there is room for one; it is the same query
+       src/layout.js branches on, so the two agree by construction. A page with one pane in it
+       must never be split, and outside the query a .wt-split grid is still one column, so an
+       aside would stack under the primary — App never renders one there, for the same reason.
+       The height floor is what keeps a landscape phone (852x393) on rail + one column.
+       The seam sits at 50vw because the gutter is centred on the crease of a folded phone: the
+       first column is that half-viewport less everything to its left (the rail and the left
+       safe-area inset) and less half the 24px gutter, so the gap straddles the fold instead of
+       putting a line of text on it. The secondary is its own scroller pinned to the viewport,
+       so the primary keeps scrolling with the document and scroll restoration is untouched.
+       The expanded rest card is pinned to the same first column here: it belongs to the
+       session being logged, and centred across the whole content area it would straddle the
+       seam and cover the reading column beside it. */
+    @media (min-width:840px) and (min-height:500px){.wt-panes.wt-split{grid-template-columns:calc(50vw - var(--wt-rail-w) - var(--wt-inset-l) - 12px) minmax(0,1fr);column-gap:24px}.wt-pane-2{position:sticky;top:0;align-self:start;max-height:100vh;max-height:100dvh;overflow-y:auto}.wt-rest-card{margin-left:0;max-width:calc(50vw - var(--wt-rail-w) - var(--wt-inset-l) - 44px)}}
+    /* Compact: a glass capsule floating over the content, only as wide as its items.
+       Centred with auto margins rather than a transform, for the reason above — and inside
+       the safe area, not the viewport: left/right are the horizontal insets, so in landscape
+       the capsule centres on the same column #root's padding produces instead of reaching
+       under the rounded corner. z-index 200 is Z.nav in src/tokens.js — keep the two in
+       step. Never give this overflow:hidden: it clips the harness's capture sentinel, and any
+       glow a later phase adds. */
+    .wt-nav{position:fixed;z-index:200;left:var(--wt-inset-l);right:var(--wt-inset-r);bottom:var(--wt-dock-gap);margin:0 auto;width:fit-content;max-width:calc(100% - 24px - var(--wt-inset-l) - var(--wt-inset-r));height:var(--wt-dock-h);display:flex;align-items:center;gap:2px;padding:0 6px;border-radius:28px;border:1px solid var(--wt-border);box-shadow:0 8px 28px rgba(0,0,0,.35)}
+    /* Geometry only. The item's colour stays inline on the button (src/shell/AppShell.jsx):
+       it is palette-driven, and jsdom never loads this stylesheet — but the fade between
+       muted and accent is this rule's job, as it was S.navBtn's TRANSITION_FAST. */
+    .wt-nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:64px;min-height:48px;padding:0 10px;background:none;border:0;border-radius:22px;font:600 11px/1 var(--wt-sans);letter-spacing:.04em;cursor:pointer;position:relative;transition:color 120ms var(--wt-ease),transform 120ms var(--wt-ease)}
+    /* Second, shape-based cue for the selected tab: a tinted capsule behind the icon. The
+       tint is the palette's accentG (the accent at low alpha) read through its --wt-* mirror,
+       so a theme swap recolours it with no JavaScript; the icon itself keeps the button's
+       inline accent. Same capsule in the rail — nothing here changes with the media query. */
+    .wt-nav-icon{display:inline-flex;align-items:center;justify-content:center;width:44px;height:26px;border-radius:999px;transition:background 120ms var(--wt-ease)}
+    .wt-nav-item[aria-current] .wt-nav-icon{background:var(--wt-accentG)}
+    /* The rail's one action. Hidden on compact rather than squeezed: the capsule is only as
+       wide as its items and Home already carries Start Workout, so the four-tab dock stays
+       exactly as shot. On the rail margin-top:auto drops it to the bottom, above the inset
+       the rail already pads with, and the filled icon capsule makes it the one solid control
+       there — the active tab's is --wt-accentG, the soft tint, and the two stay distinct. */
+    .wt-nav-action{display:none}
+    @media (min-width:700px){
+      .wt-nav{top:0;bottom:0;left:0;right:auto;margin:0;width:calc(var(--wt-rail-w) + var(--wt-inset-l));max-width:none;height:auto;border-radius:0;flex-direction:column;justify-content:flex-start;gap:4px;padding:calc(var(--wt-inset-t) + 12px) 0 calc(var(--wt-inset-b) + 12px) var(--wt-inset-l);border:0;border-right:1px solid var(--wt-border);box-shadow:none}
+      .wt-nav-item{width:100%;min-height:56px}
+      .wt-nav-action{display:flex;margin-top:auto}
+      .wt-nav-action .wt-nav-icon{background:var(--wt-accent);color:#fff}
+    }
+    /* ── Glass ──
+       Chrome only, leaf elements only: the dock/rail, the top mask and the two collapsed
+       pills. Never the expanded rest card, never #root, never anything with a fixed child
+       (backdrop-filter re-roots them — see the shell comment above). Declaration order is
+       the fallback chain: the opaque surface comes first, so a browser with backdrop-filter
+       but no color-mix keeps a solid dock rather than a see-through one. The light variant
+       and every override below repeat the opaque line for the same reason. The two opacities
+       are read by tests/themeContrast.test.js, which checks every palette's copy colours
+       against the glass over an accent block: 88% is the lightest the light palettes can
+       carry and keep `dim` at AA (ocean light sits at 4.6:1 there). */
+    .wt-glass{background:var(--wt-surface);background:color-mix(in srgb,var(--wt-surface) 84%,transparent);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}
+    :root[data-scheme=light] .wt-glass{background:var(--wt-surface);background:color-mix(in srgb,var(--wt-surface) 88%,transparent)}
+    /* No blur available: a tinted-but-unblurred dock is the worst of both, so go opaque. The
+       light selector is repeated because it outranks the bare class. */
+    @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.wt-glass,:root[data-scheme=light] .wt-glass{background:var(--wt-surface)}}
+    /* The OS asked for solid chrome, or the screen is pure black: an OLED palette gains
+       nothing from a blur and loses its point. */
+    @media (prefers-reduced-transparency:reduce),(prefers-contrast:more){.wt-glass,:root[data-scheme=light] .wt-glass{background:var(--wt-surface);-webkit-backdrop-filter:none;backdrop-filter:none}}
+    :root[data-oled] .wt-glass{background:var(--wt-surface);-webkit-backdrop-filter:none;backdrop-filter:none}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes prPop{0%{transform:scale(.5);opacity:0}50%{transform:scale(1.2)}100%{transform:scale(1);opacity:1}}
+    @keyframes toastIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes toastOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(20px)}}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+    @keyframes pulseStrong{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.7;transform:scale(1.04)}}
+    @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    /* Modal choreography: the scrim fades, the card pops. The -out variants run while a
+       modal plays its exit (useAnimatedPresence) before the parent unmounts it. */
+    @keyframes scrimIn{from{opacity:0}to{opacity:1}}
+    @keyframes scrimOut{from{opacity:1}to{opacity:0}}
+    @keyframes popIn{from{opacity:0;transform:scale(0.96) translateY(10px)}to{opacity:1;transform:none}}
+    @keyframes popOut{from{opacity:1;transform:none}to{opacity:0;transform:scale(0.96) translateY(10px)}}
+    @keyframes sheetIn{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes sheetOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(28px)}}
+    /* The Sheet component's own pair (src/components/Sheet.jsx). Separate from sheetIn/Out
+       above, which the three full-page overlays use: this one overshoots by 4px on the way
+       up, the way a native sheet settles. At >=700px the sheet is a centred card held there
+       by translate(-50%,-50%), so a keyframe that animates transform has to carry the
+       centring itself — wtCardIn/Out are those, swapped in by animation-name below. */
+    @keyframes wtSheetIn{from{opacity:0;transform:translateY(28px)}70%{transform:translateY(-4px)}to{opacity:1;transform:none}}
+    @keyframes wtSheetOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(28px)}}
+    @keyframes wtCardIn{from{opacity:0;transform:translate(-50%,-50%) scale(.96)}to{opacity:1;transform:translate(-50%,-50%)}}
+    @keyframes wtCardOut{from{opacity:1;transform:translate(-50%,-50%)}to{opacity:0;transform:translate(-50%,-50%) scale(.96)}}
+    /* A completed set settles with a small press-and-release; the logging flow wires it. */
+    @keyframes setDone{0%{transform:scale(1)}40%{transform:scale(1.06)}100%{transform:scale(1)}}
+    .hit44{position:relative}.hit44::after{content:"";position:absolute;left:50%;top:50%;width:44px;height:44px;transform:translate(-50%,-50%)}
+    /* The return pill is ~146px wide and 36px tall, so the square above covered only its middle 44px: stretch the target across it. */
+    .wt-acc.hit44::after{left:0;right:0;width:auto;transform:translateY(-50%)}
+    /* Large titles (S.title, 34px inline) drop to 28px when the viewport is short: a landscape
+       phone at 393px tall should not spend a tenth of it on one word. !important because the
+       size is an inline style; .safe-bottom-float is the precedent. */
+    @media (max-height:700px){.wt-title{font-size:28px!important}}
+    .fade-in{animation:fadeIn .25s ease-out}.slide-in{animation:slideIn .2s ease-out}.pr-pop{animation:prPop .35s ease-out}
+    .scrim-in{animation:scrimIn .18s var(--wt-ease)}.scrim-out{animation:scrimOut .18s var(--wt-ease) forwards}
+    .pop-in{animation:popIn .18s var(--wt-ease)}.pop-out{animation:popOut .18s var(--wt-ease) forwards}
+    .set-done{animation:setDone .22s var(--wt-ease)}
+    .sheet-in{animation:sheetIn .22s var(--wt-ease)}.sheet-out{animation:sheetOut .18s var(--wt-ease) forwards}
+    .wt-sheet-in{animation:wtSheetIn .26s var(--wt-ease)}.wt-sheet-out{animation:wtSheetOut .18s var(--wt-ease) forwards}
+    .toast-in{animation:toastIn .3s ease-out}.toast-out{animation:toastOut .3s ease-in forwards}
+    .pulse{animation:pulse 1s ease-in-out infinite}
+    .pulse-strong{animation:pulseStrong 1.4s ease-in-out infinite}
+    .skeleton{background:linear-gradient(90deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.10) 50%,rgba(255,255,255,0.04) 100%);background-size:200% 100%;animation:shimmer 1.6s linear infinite;border-radius:12px}
+    .safe-overlay{position:fixed;top:0;left:0;right:0;bottom:0;padding-top:var(--wt-inset-t);padding-bottom:var(--wt-inset-b);padding-left:var(--wt-inset-l);padding-right:var(--wt-inset-r)}
+    /* ── Full-page overlay ──
+       The three search flows (exercise picker, plate calculator, muscle-group editor) were
+       fixed boxes with an inline max-width of 480 and `margin:0 auto`, so on anything wider
+       — the unfolded Duo is 890 — they drew a 480px strip down the middle with the live
+       screen showing beside it and still taking taps under an aria-modal dialog. The overlay
+       now covers the viewport and the column inside it is the shell's own (--wt-col-max:
+       600px, 640px at >=700px). z-index 300 is Z.overlay in src/tokens.js and
+       tests/shellCss.test.js imports the token to pin it. width:100% on the column is
+       load-bearing: align-items:center would otherwise shrink it to its content. The
+       column's own overflow-y is the scroller the plate calculator never had, and
+       min-height:0 lets the picker's and the editor's inner lists shrink first, so their
+       headers stay put and the column itself never overflows. */
+    .wt-page-overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:300;display:flex;flex-direction:column;align-items:center;padding:var(--wt-inset-t) var(--wt-inset-r) var(--wt-inset-b) var(--wt-inset-l)}
+    .wt-page-col{width:100%;max-width:var(--wt-col-max);flex:1;min-height:0;display:flex;flex-direction:column;overflow-y:auto}
+    .safe-modal{padding:max(20px, var(--wt-inset-t)) max(20px, var(--wt-inset-r)) max(20px, var(--wt-inset-b)) max(20px, var(--wt-inset-l))}
+    /* ── Sheet ──
+       All of src/components/Sheet.jsx's geometry, because none of it can be an inline style:
+       it changes shape at the breakpoint and its bottom padding clears the home indicator.
+       Compact is a bottom sheet anchored between the horizontal insets — a phone in landscape
+       otherwise puts its corners under the rounded ones. z-index 400 is Z.modal in
+       src/tokens.js and the radius is R.xxl; keep all three in step (tests/shellCss.test.js
+       imports the tokens and pins them). Never .wt-glass on this: it carries copy. The
+       transform at >=700px is safe here and nowhere else in this sheet — the panel is a leaf
+       with no fixed child, so nothing can be re-rooted into it. */
+    .wt-sheet{position:fixed;left:var(--wt-inset-l);right:var(--wt-inset-r);bottom:0;z-index:400;max-height:min(70dvh,70vh);overflow:auto;border-radius:24px 24px 0 0;padding:16px 16px max(16px,var(--wt-inset-b))}
+    @media (min-width:700px){.wt-sheet{left:50%;right:auto;bottom:auto;top:50%;transform:translate(-50%,-50%);width:420px;max-width:calc(100% - 48px);border-radius:24px}.wt-sheet-in{animation-name:wtCardIn}.wt-sheet-out{animation-name:wtCardOut}}
+    /* Bottom only, on purpose: the update banner brings its own horizontal anchoring through
+       .wt-float-bar, and a `left` here would re-anchor it to the wrong edge. It clears the
+       accessory band as well as the dock, which is what keeps it off the two pills below. */
+    .safe-bottom-float{bottom:calc(var(--wt-dock-clear) + var(--wt-acc-h) + 10px)!important}
+    /* ── Workout accessory band ──
+       Two self-positioned fixed leaves, one step above the dock: "Return to workout" on the
+       leading edge of the content area (beside the rail at >=700px), the rest-timer pill on
+       the trailing one, and the expanded rest card spanning between them. Neither may use
+       .safe-bottom-float — that adds --wt-acc-h, which is the band these three occupy, so
+       they would lift themselves clear of their own reservation. .wt-acc has to come after
+       .hit44 above: same specificity, and its position:fixed must win over that rule's
+       position:relative. z-index 150 is Z.timer in src/tokens.js — keep the two in step. */
+    .wt-acc{position:fixed;z-index:150;left:calc(var(--wt-rail-w) + var(--wt-inset-l) + 16px);bottom:calc(var(--wt-dock-clear) + 10px);height:36px;padding:0 14px;display:flex;align-items:center;gap:6px;border-radius:18px;cursor:pointer;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,.35)}
+    .wt-rest-pill{right:calc(var(--wt-inset-r) + 16px);bottom:calc(var(--wt-dock-clear) + 10px);box-shadow:0 2px 10px rgba(0,0,0,.35)}
+    .wt-rest-card{left:calc(var(--wt-rail-w) + var(--wt-inset-l) + 16px);right:calc(var(--wt-inset-r) + 16px);bottom:calc(var(--wt-dock-clear) + 10px);max-width:448px;margin:0 auto}
+    /* The only glows in the app: the Start/Resume call to action and a running (accent) or
+       finished (green) rest pill. Declared after .wt-rest-pill so they win its idle shadow on
+       a tie. No fallback needed — where color-mix is unknown the shadow is simply dropped. */
+    .wt-glow{box-shadow:0 8px 24px color-mix(in srgb,var(--wt-accent) 38%,transparent)}
+    .wt-glow-green{box-shadow:0 8px 24px color-mix(in srgb,var(--wt-green) 38%,transparent)}
+    /* The band exists only while something is in it, which is what #root's padding, the toast
+       and the update banner read. A browser without :has() keeps --wt-acc-h at 0 and the band
+       may cover the last 52px of the page — acceptable, and the only thing lost. */
+    #root:has(.wt-acc,.wt-rest-pill,.wt-rest-card){--wt-acc-h:52px}
+    /* Full-width floating bar (the update banner): spans the content area beside the rail
+       and keeps its card on the same column as the screen behind it. */
+    .wt-float-bar{left:calc(var(--wt-rail-w) + var(--wt-inset-l));right:var(--wt-inset-r)}
+    .wt-float-bar>*{max-width:var(--wt-col-max);margin-left:auto;margin-right:auto}
+    .safe-top-mask{position:fixed;top:0;left:0;right:0;height:var(--wt-inset-t);z-index:998;pointer-events:none}
+    /* Centred on the content area rather than the window, so the rail does not push it
+       off-centre. Toast keeps its own translateX(-50%): it is a leaf with no fixed children. */
+    .safe-toast{position:fixed;left:calc(50% + (var(--wt-rail-w) + var(--wt-inset-l) - var(--wt-inset-r))/2);transform:translateX(-50%);bottom:calc(var(--wt-dock-clear) + var(--wt-acc-h) + 12px);z-index:500}
+    .progress-screen svg:focus-visible{outline:2px solid var(--wt-accent,#6c5ce7);outline-offset:2px;border-radius:4px}
+    /* Respect the OS setting: the app is motion-heavy (fade-ins on every card, a pulsing
+       draft banner, an infinite shimmer) and that is exactly what triggers vestibular
+       symptoms. Kept non-zero so animationend/transitionend listeners still fire. */
+    @media (prefers-reduced-motion: reduce){
+      *,*::before,*::after{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important;scroll-behavior:auto!important}
+      button:not(:disabled):active,[role=button]:active,.tappable:active{transform:none}
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<!-- The policy and the terms have to be reachable from the home page's own HTML, script or
+     no script: Google's OAuth review reads it for a privacy link. Static, so the build's
+     bundle-tag stamping below is untouched. -->
+<noscript><p style="max-width:42rem;margin:2rem auto;padding:0 1.25rem;line-height:1.6">Ledger needs JavaScript to run. <a href="privacy.html" style="color:#a29bfe">Privacy Policy</a> · <a href="terms.html" style="color:#a29bfe">Terms of Use</a></p></noscript>
+<!-- SRI pinned: this origin holds the whole training log and the cloud-backup token, so a
+     compromised CDN response would own all of it. The browser refuses any script whose bytes
+     don't hash to these values. Hashes verified byte-identical across cdnjs and unpkg.
+     They MUST be recomputed if the React version above ever changes. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" integrity="sha384-tMH8h3BGESGckSAVGZ82T9n90ztNXxvdwvdM6UoR56cYcf+0iGXBliJ29D+wZ/x8" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" integrity="sha384-bm7MnzvK++ykSwVJ2tynSE5TRdN+xL418osEVF2DE/L/gfWHj91J2Sphe582B1Bh" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="bundle.js?v=10.5.2"></script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('./sw.js').catch(()=>{})})}</script>
+</body>
+</html>
