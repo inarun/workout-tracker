@@ -1,14 +1,13 @@
 {
-  "name": "Ledger",
+  "name": "Lifting Ledger",
   "short_name": "Ledger",
-  "description": "The Ledger: a personal workout tracker with PR tracking",
-  "start_url": ".",
+  "description": "Lifting Ledger is a private workout log for iPhone and Apple Watch. The Ledger web app has closed.",
+  "start_url": "./",
   "id": "/workout-tracker/",
   "scope": "/workout-tracker/",
-  "display": "standalone",
+  "display": "browser",
   "background_color": "#0a0a0f",
   "theme_color": "#0a0a0f",
-  "orientation": "any",
   "icons": [
     {
       "src": "icon-192.png",
