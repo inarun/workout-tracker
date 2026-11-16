@@ -6,72 +6,299 @@
   <title>Support | Ledger</title>
   <meta name="description" content="Help and contact for Ledger (Lifting Ledger on the App Store), a workout log for iPhone and Apple Watch." />
   <meta name="robots" content="index, follow" />
-  <meta name="color-scheme" content="dark" />
-  <meta name="theme-color" content="#0a0a0f" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0a0a0f" media="(prefers-color-scheme: dark)" />
   <link rel="icon" href="icon-192.png" />
   <!-- Deliberately standalone, like privacy.html: no script, no CDN font, no third-party
        anything, and inline styling. This is the Support URL given to App Store Connect; keep
        it in the ci.yml deploy allowlist or the URL 404s. -->
   <style>
-    :root { color-scheme: dark; }
+    /* The same block, byte for byte, in privacy.html, terms.html and support.html, so the
+       three read as one set. Change it in all three or in none. */
+    :root {
+      color-scheme: light dark;
+      --bg: #ffffff;
+      --surface: #f4f3fa;
+      --text: #1b1a2b;
+      --muted: #575470;
+      --border: #d5d3e3;
+      --edge: #7b7894;
+      --accent: #4a3bc4;
+      --accent-hover: #34289c;
+      --accent-bg: #4a3bc4;
+      --accent-bg-hover: #34289c;
+      --on-accent: #ffffff;
+      --ring: #5546d6;
+      --col: 38rem;
+      --side: 14rem;
+      --gap: 3.5rem;
+      --pad-l: max(1.25rem, env(safe-area-inset-left));
+      --pad-r: max(1.25rem, env(safe-area-inset-right));
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0a0a0f;
+        --surface: #15151f;
+        --text: #e8e8f0;
+        --muted: #a9a9c2;
+        --border: #2a2a3a;
+        --edge: #6d6d8a;
+        --accent: #a29bfe;
+        --accent-hover: #c9c3ff;
+        --accent-bg: #a29bfe;
+        --accent-bg-hover: #c9c3ff;
+        --on-accent: #0a0a0f;
+        --ring: #a29bfe;
+      }
+    }
     * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
     body {
       margin: 0;
-      padding: 2.5rem 1.25rem 4rem;
-      background: #0a0a0f;
-      color: #e8e8f0;
+      padding-bottom: 4rem;
+      background: var(--bg);
+      color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      font-size: 17px;
+      font-size: 1.0625rem;
       line-height: 1.65;
-      -webkit-text-size-adjust: 100%;
+      overflow-wrap: break-word;
       -webkit-font-smoothing: antialiased;
     }
-    main { max-width: 42rem; margin: 0 auto; }
-    h1 { font-size: 1.85rem; line-height: 1.2; margin: 0 0 0.35rem; letter-spacing: -0.01em; }
-    h2 { font-size: 1.2rem; line-height: 1.3; margin: 2.4rem 0 0.6rem; color: #ffffff; }
-    p, li { color: #d2d2e0; }
+
+    /* Header */
+    .site-header { border-bottom: 1px solid var(--border); }
+    .bar, .layout {
+      width: 100%;
+      max-width: calc(var(--col) + var(--pad-l) + var(--pad-r));
+      margin: 0 auto;
+      padding-left: var(--pad-l);
+      padding-right: var(--pad-r);
+    }
+    .bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.25rem 1rem;
+      padding-top: 0.75rem;
+      padding-bottom: 0.75rem;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.65rem;
+      min-height: 2.75rem;
+      color: var(--text);
+      font-weight: 650;
+      letter-spacing: -0.01em;
+      text-decoration: none;
+    }
+    .brand img { display: block; width: 32px; height: 32px; border-radius: 22.4%; }
+    .site-nav { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-left: -0.75rem; }
+    .site-nav a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 2.75rem;
+      padding: 0 0.75rem;
+      border-radius: 0.5rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .site-nav a:hover { color: var(--text); }
+    .site-nav a[aria-current="page"] {
+      background: var(--surface);
+      color: var(--text);
+      font-weight: 650;
+      text-decoration: underline;
+      text-decoration-color: var(--accent);
+      text-decoration-thickness: 2px;
+      text-underline-offset: 0.4em;
+    }
+
+    /* Page */
+    .layout { padding-top: 2.5rem; }
+    main { min-width: 0; }
+    h1, h2 { text-wrap: balance; }
+    h1, h2, section[id] { scroll-margin-top: 1.5rem; }
+    h1 {
+      margin: 0 0 0.6rem;
+      font-size: clamp(1.9rem, 1.5rem + 2vw, 2.5rem);
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.025em;
+    }
+    h2 {
+      margin: 2.75rem 0 0.75rem;
+      font-size: 1.3rem;
+      font-weight: 650;
+      line-height: 1.3;
+      letter-spacing: -0.01em;
+    }
     p { margin: 0 0 1rem; }
     ul { margin: 0 0 1rem; padding-left: 1.25rem; }
-    li { margin-bottom: 0.35rem; }
-    strong { color: #ffffff; }
-    a { color: #a29bfe; }
-    a:hover { color: #c9c3ff; }
-    :focus-visible { outline: 2px solid #6c5ce7; outline-offset: 2px; border-radius: 4px; }
+    li { margin-bottom: 0.45rem; }
+    li::marker { color: var(--muted); }
+    strong { font-weight: 650; }
+    a {
+      color: var(--accent);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 0.18em;
+      transition: color 0.15s;
+    }
+    a:hover { color: var(--accent-hover); text-decoration-thickness: 2px; }
+    :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: 0.25rem; }
     code {
+      padding: 0.08em 0.35em;
+      border: 1px solid var(--border);
+      border-radius: 0.3rem;
+      background: var(--surface);
       font-family: ui-monospace, 'SF Mono', Menlo, 'Fira Code', monospace;
       font-size: 0.9em;
-      background: #16161f;
-      border: 1px solid #24242f;
-      border-radius: 4px;
-      padding: 0.08em 0.35em;
       word-break: break-word;
     }
-    .lede { color: #9a9ab4; margin: 0 0 0.25rem; font-size: 0.95rem; }
-    .updated { color: #7a7a9c; font-size: 0.9rem; margin: 0 0 2rem; }
-    .home { display: inline-block; margin-bottom: 2rem; font-size: 0.95rem; }
+    table { display: block; max-width: 100%; margin: 0 0 1rem; overflow-x: auto; border-collapse: collapse; }
+    th, td { padding: 0.5rem 0.75rem; border: 1px solid var(--border); text-align: left; vertical-align: top; }
+    th { background: var(--surface); }
+    .lede { margin: 0 0 0.5rem; color: var(--muted); font-size: 1.15rem; line-height: 1.5; }
+    .lede-solo { margin-bottom: 2rem; }
+    .updated { margin: 0 0 2rem; color: var(--muted); font-size: 0.9rem; }
+    .updated strong { color: var(--text); font-weight: 600; }
+
+    /* Cards: the "In short" summary and the support contact */
+    #in-short, .card {
+      margin: 2rem 0 0;
+      padding: 1.1rem 1.4rem 0.65rem;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 0.9rem;
+      background: var(--surface);
+    }
+    #in-short h2, .card h2 { margin-top: 0; }
+    .mail {
+      display: inline-block;
+      padding: 0.1rem 0.75rem;
+      border-radius: 0.5rem;
+      background: var(--accent-bg);
+      color: var(--on-accent);
+      font-weight: 650;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: background-color 0.15s;
+    }
+    .mail:hover { background: var(--accent-bg-hover); color: var(--on-accent); }
+
+    /* Contents (privacy.html): a closed <details> on small screens, a sticky column from 1000px */
+    .toc-side { display: none; }
+    .toc-inline {
+      margin: 0 0 2rem;
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      background: var(--surface);
+    }
+    .toc-inline summary {
+      display: flex;
+      align-items: center;
+      min-height: 2.75rem;
+      padding: 0 1rem;
+      cursor: pointer;
+      font-weight: 650;
+    }
+    .toc-inline summary { list-style: none; }
+    .toc-inline summary::-webkit-details-marker { display: none; }
+    .toc-inline summary::after {
+      content: "";
+      width: 0.5rem;
+      height: 0.5rem;
+      margin: -0.2rem 0.1rem 0 auto;
+      border-right: 2px solid var(--muted);
+      border-bottom: 2px solid var(--muted);
+      transform: rotate(45deg);
+    }
+    .toc-inline[open] summary::after { margin-top: 0.25rem; transform: rotate(-135deg); }
+    .toc-inline ul { margin: 0; padding: 0 1rem 0.75rem; list-style: none; }
+    .toc-title { margin: 0 0 0.5rem; color: var(--muted); font-size: 0.85rem; font-weight: 650; }
+    .toc-inline li, .toc-side li { margin: 0; }
+    .toc-inline li a, .toc-side li a {
+      display: block;
+      padding: 0.3rem 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.4;
+      text-decoration: none;
+    }
+    .toc-side ul { margin: 0; padding: 0; list-style: none; }
+    .toc-inline li a:hover, .toc-side li a:hover { color: var(--accent); text-decoration: underline; }
+    @media (min-width: 1000px) {
+      .toc-page .bar, .toc-page .layout {
+        max-width: calc(var(--col) + var(--side) + var(--gap) + var(--pad-l) + var(--pad-r));
+      }
+      .toc-page .layout {
+        display: grid;
+        grid-template-columns: var(--side) minmax(0, 1fr);
+        column-gap: var(--gap);
+      }
+      .toc-side {
+        display: block;
+        position: sticky;
+        top: 1.5rem;
+        align-self: start;
+        max-height: calc(100vh - 3rem);
+        overflow-y: auto;
+      }
+      .toc-inline { display: none; }
+    }
+
+    /* Footer */
     footer {
       margin-top: 3rem;
       padding-top: 1.5rem;
-      border-top: 1px solid #24242f;
-      color: #7a7a9c;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
       font-size: 0.9rem;
     }
-    footer a { color: #8f88e0; }
+
+    @media (prefers-reduced-motion: reduce) {
+      a, .site-nav a, .mail { transition: none; }
+    }
+    @media print {
+      :root { --bg: #fff; --surface: #fff; --text: #000; --muted: #000; --border: #888; --accent: #000; }
+      body { padding-bottom: 0; font-size: 11pt; }
+      .site-nav, .toc-side, .toc-inline { display: none; }
+      .layout { padding-top: 1.5rem; }
+      .toc-page .layout { display: block; }
+      a { color: #000; }
+      .mail { padding: 0; background: none; color: #000; text-decoration: underline; }
+      #in-short, .card { border: 1px solid #888; break-inside: avoid; }
+      h2 { break-after: avoid; }
+    }
   </style>
 </head>
 <body>
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="./"><img src="icon-192.png" alt="" width="32" height="32" />Lifting Ledger</a>
+    <nav class="site-nav" aria-label="Site">
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
+      <a href="support.html" aria-current="page">Support</a>
+    </nav>
+  </div>
+</header>
+<div class="layout">
 <main>
-  <a class="home" href="./">&larr; Ledger</a>
-
   <h1>Ledger support</h1>
-  <p>
+  <p class="lede lede-solo">
     Ledger (Lifting Ledger on the App Store) is a workout log for iPhone and Apple Watch. It is
     made and run by one person, so support is by email.
   </p>
 
+  <section class="card" id="contact">
   <h2>Contact</h2>
   <p>
-    Email <a href="mailto:support@nusayb.me">support@nusayb.me</a>. Say what you were doing, what
+    Email <a class="mail" href="mailto:support@nusayb.me">support@nusayb.me</a>. Say what you were doing, what
     you expected and what happened, and add a screenshot if you can. Your iPhone model, iOS
     version and the app version (Settings › About in Ledger) help too.
   </p>
@@ -79,6 +306,8 @@
     If you're testing a beta, you can also send feedback from TestFlight: take a screenshot, then
     choose Share Beta Feedback.
   </p>
+
+  </section>
 
   <h2>Common questions</h2>
   <ul>
@@ -116,5 +345,6 @@
 
   <p>Ledger is a training log, not medical advice.</p>
 </main>
+</div>
 </body>
 </html>
